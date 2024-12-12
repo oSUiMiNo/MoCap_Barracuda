@@ -4,10 +4,10 @@ using UnityEngine.Video;
 
 public class VideoCapture : MonoBehaviour
 {
-    public GameObject InputTexture;
+    public GameObject TextureDisp_Input;
+    public GameObject TextureDisp_Soutce;
     public RawImage VideoScreen;
-    public GameObject VideoBackground;
-    public float VideoBackgroundScale;
+    public float SoutceTextureScale = 1;
     public LayerMask _layer;
     public bool UseWebCam = true;
     public int WebCamIndex = 0;
@@ -15,11 +15,11 @@ public class VideoCapture : MonoBehaviour
 
     private WebCamTexture webCamTexture;
     private RenderTexture videoTexture;
+    public RenderTexture InputTexture { get; private set; }
 
     private int videoScreenWidth = 2560;
     private int bgWidth, bgHeight;
 
-    public RenderTexture MainTexture { get; private set; }
 
 
     // エントリーポイント
@@ -50,8 +50,8 @@ public class VideoCapture : MonoBehaviour
 
         sd.sizeDelta = new Vector2(videoScreenWidth, videoScreenWidth * webCamTexture.height / webCamTexture.width);
         var aspect = (float)webCamTexture.width / webCamTexture.height;
-        VideoBackground.transform.localScale = new Vector3(aspect, 1, 1) * VideoBackgroundScale;
-        VideoBackground.GetComponent<Renderer>().material.mainTexture = webCamTexture;
+        TextureDisp_Soutce.transform.localScale = new Vector3(aspect, 1, 1) * SoutceTextureScale;
+        TextureDisp_Soutce.GetComponent<Renderer>().material.mainTexture = webCamTexture;
 
         InitMainTexture();
     }
@@ -72,8 +72,8 @@ public class VideoCapture : MonoBehaviour
 
         var aspect = (float)videoTexture.width / videoTexture.height;
 
-        VideoBackground.transform.localScale = new Vector3(aspect, 1, 1) * VideoBackgroundScale;
-        VideoBackground.GetComponent<Renderer>().material.mainTexture = videoTexture;
+        TextureDisp_Soutce.transform.localScale = new Vector3(aspect, 1, 1) * SoutceTextureScale;
+        TextureDisp_Soutce.GetComponent<Renderer>().material.mainTexture = videoTexture;
 
         InitMainTexture();
     }
@@ -84,7 +84,7 @@ public class VideoCapture : MonoBehaviour
     {
         GameObject go = new GameObject("Cam_MainTexture", typeof(Camera));
 
-        go.transform.parent = VideoBackground.transform;
+        go.transform.parent = TextureDisp_Soutce.transform;
         go.transform.localScale = new Vector3(-1.0f, -1.0f, 1.0f);
         go.transform.localPosition = new Vector3(0.0f, 0.0f, -2.0f);
         go.transform.localEulerAngles = Vector3.zero;
@@ -104,14 +104,14 @@ public class VideoCapture : MonoBehaviour
         camera.allowMSAA = false;
         camera.allowHDR = false;
 
-        MainTexture = new RenderTexture(bgWidth, bgHeight, 24, RenderTextureFormat.RGB565, RenderTextureReadWrite.sRGB)
+        InputTexture = new RenderTexture(bgWidth, bgHeight, 24, RenderTextureFormat.RGB565, RenderTextureReadWrite.sRGB)
         {
             useMipMap = false,
             autoGenerateMips = false,
             wrapMode = TextureWrapMode.Clamp,
             filterMode = FilterMode.Point,
         };
-        camera.targetTexture = MainTexture;
-        if (InputTexture.activeSelf) InputTexture.GetComponent<Renderer>().material.mainTexture = MainTexture;
+        camera.targetTexture = InputTexture;
+        if (TextureDisp_Input.activeSelf) TextureDisp_Input.GetComponent<Renderer>().material.mainTexture = InputTexture;
     }
 }

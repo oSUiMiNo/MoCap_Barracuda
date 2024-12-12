@@ -2,62 +2,56 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Position index of joint points
-/// </summary>
+
+// ポジションのインデクス
 public enum PositionIndex : int
 {
-    rShldrBend = 0,
-    rForearmBend,
-    rHand,
-    rThumb2,
-    rMid1,
+    // 腕
+    rShldrBend = 0, // 0 上腕ボーンのTransformなので肩
+    rForearmBend,　 // 1 前腕ボーンのTransformなので肘
+    rHand,          // 2 手ボーンのTransformなので手首
+    rThumb2,        // 3 親指中節骨ボーンのTransformなのでMP関節
+    rMid1,          // 4 中指末節骨ボーンのTransformなのでMP関節
+    lShldrBend,     // 5
+    lForearmBend,   // 6
+    lHand,          // 7
+    lThumb2,        // 8
+    lMid1,          // 9
+    // 首から上     
+    lEar,           // 10 左耳(実際は頭ボーンのTransformなので頭)
+    lEye,           // 11 左目ボーンのTransformなので左目
+    rEar,           // 12 右耳(実際は頭ボーンのTransformなので頭)
+    rEye,           // 13 右目ボーンのTransformなので右目
+    Nose,           // 14 鼻(手動で追加)
+    // 脚
+    rThighBend,     // 15 太ももボーンのTransformなので股関節
+    rShin,          // 16 すねボーンのTransformなので膝
+    rFoot,          // 17 足ボーンのTransformなので足首
+    rToe,           // 18 つま先ボーンのTransformなのでつま先
+    lThighBend,     // 19
+    lShin,          // 20
+    lFoot,          // 21
+    lToe,           // 22
+    
+    abdomenUpper,   // 23 腹部上部(実際は背骨第一ボーンのTransform)
 
-    lShldrBend,
-    lForearmBend,
-    lHand,
-    lThumb2,
-    lMid1,
+    // 追加関節(VNectBarracudaRunnerクラス内で既存の関節の位置から算出)
+    hip,            // 24 尻
+    head,           // 25 頭
+    neck,           // 26 首
+    spine,          // 27 脊椎(実際は背骨第一ボーン)
 
-    lEar,
-    lEye,
-    rEar,
-    rEye,
-    Nose,
-
-    rThighBend,
-    rShin,
-    rFoot,
-    rToe,
-
-    lThighBend,
-    lShin,
-    lFoot,
-    lToe,
-
-    abdomenUpper,
-
-    //Calculated coordinates
-    hip,
-    head,
-    neck,
-    spine,
-
-    Count,
-    None,
+    Count,          // 28 なぞ
+    None,           // 29 なぞ
 }
 
-public static partial class EnumExtend
+public static partial class EnumExtension
 {
-    public static int Int(this PositionIndex i)
-    {
-        return (int)i;
-    }
+    public static int Int(this PositionIndex i) => (int)i;
 }
 
 public class VNectModel : MonoBehaviour
 {
-
     public class JointPoint
     {
         public Vector2 Pos2D = new Vector2();
@@ -68,16 +62,18 @@ public class VNectModel : MonoBehaviour
         public Vector3[] PrevPos3D = new Vector3[6];
         public float score3D;
 
-        // Bones
-        public Transform Transform = null;
+        // 3つのパラメータでボーンを表現
+        public Transform Transform = null; // AnimatorからボーンごとのTransformの参照を取っている
         public Quaternion InitRotation;
         public Quaternion Inverse;
         public Quaternion InverseRotation;
 
-        public JointPoint Child = null;
+        // 自分の親関節
         public JointPoint Parent = null;
+        // 自分の子関節
+        public JointPoint Child = null;
 
-        // For Kalman filter
+        // カルマンフィルタ用のパラメータ
         public Vector3 P = new Vector3();
         public Vector3 X = new Vector3();
         public Vector3 K = new Vector3();
@@ -104,7 +100,7 @@ public class VNectModel : MonoBehaviour
 
     // Joint position and bone
     private JointPoint[] jointPoints;
-    public JointPoint[] JointPoints { get { return jointPoints; } }
+    public JointPoint[] JointPoints => jointPoints;
 
     private Vector3 initPosition; // Initial center position
 
@@ -122,91 +118,77 @@ public class VNectModel : MonoBehaviour
     private float prevTall = 224 * 0.75f;
     public float ZScale = 0.8f;
 
-    private void Update()
+    void Update()
     {
-        if (jointPoints != null)
-        {
-            PoseUpdate();
-        }
+        if (jointPoints != null) PoseUpdate();
     }
 
 
-    /// <summary>
-    /// Initialize joint points
-    /// </summary>
-    /// <returns></returns>
+    // 全関節初期化
     public JointPoint[] Init()
     {
         jointPoints = new JointPoint[PositionIndex.Count.Int()];
         for (var i = 0; i < PositionIndex.Count.Int(); i++) jointPoints[i] = new JointPoint();
 
         anim = ModelObject.GetComponent<Animator>();
-
-        // Right Arm
+        
+        // 各ボーンのTransformの参照を各jointPointのTransformプロパティと繋ぐ
+        // 右腕
         jointPoints[PositionIndex.rShldrBend.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.RightUpperArm);
         jointPoints[PositionIndex.rForearmBend.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.RightLowerArm);
         jointPoints[PositionIndex.rHand.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.RightHand);
         jointPoints[PositionIndex.rThumb2.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.RightThumbIntermediate);
         jointPoints[PositionIndex.rMid1.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.RightMiddleProximal);
-        // Left Arm
+        // 左腕
         jointPoints[PositionIndex.lShldrBend.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.LeftUpperArm);
         jointPoints[PositionIndex.lForearmBend.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.LeftLowerArm);
         jointPoints[PositionIndex.lHand.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.LeftHand);
         jointPoints[PositionIndex.lThumb2.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.LeftThumbIntermediate);
         jointPoints[PositionIndex.lMid1.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.LeftMiddleProximal);
-
-        // Face
+        // 顔
         jointPoints[PositionIndex.lEar.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.Head);
         jointPoints[PositionIndex.lEye.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.LeftEye);
         jointPoints[PositionIndex.rEar.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.Head);
         jointPoints[PositionIndex.rEye.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.RightEye);
         jointPoints[PositionIndex.Nose.Int()].Transform = Nose.transform;
-
-        // Right Leg
+        // 右脚
         jointPoints[PositionIndex.rThighBend.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.RightUpperLeg);
         jointPoints[PositionIndex.rShin.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.RightLowerLeg);
         jointPoints[PositionIndex.rFoot.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.RightFoot);
         jointPoints[PositionIndex.rToe.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.RightToes);
-
-        // Left Leg
+        // 左脚
         jointPoints[PositionIndex.lThighBend.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
         jointPoints[PositionIndex.lShin.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.LeftLowerLeg);
         jointPoints[PositionIndex.lFoot.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.LeftFoot);
         jointPoints[PositionIndex.lToe.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.LeftToes);
-
-        // etc
+        // 他
         jointPoints[PositionIndex.abdomenUpper.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.Spine);
         jointPoints[PositionIndex.hip.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.Hips);
         jointPoints[PositionIndex.head.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.Head);
         jointPoints[PositionIndex.neck.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.Neck);
         jointPoints[PositionIndex.spine.Int()].Transform = anim.GetBoneTransform(HumanBodyBones.Spine);
 
-        // Child Settings
-        // Right Arm
+        // 各jointPointの親と子を設定。理由は不明だが全てのjointPointに対して行っているわけではない
+        // 右腕
         jointPoints[PositionIndex.rShldrBend.Int()].Child = jointPoints[PositionIndex.rForearmBend.Int()];
         jointPoints[PositionIndex.rForearmBend.Int()].Child = jointPoints[PositionIndex.rHand.Int()];
         jointPoints[PositionIndex.rForearmBend.Int()].Parent = jointPoints[PositionIndex.rShldrBend.Int()];
-
-        // Left Arm
+        // 左腕
         jointPoints[PositionIndex.lShldrBend.Int()].Child = jointPoints[PositionIndex.lForearmBend.Int()];
         jointPoints[PositionIndex.lForearmBend.Int()].Child = jointPoints[PositionIndex.lHand.Int()];
         jointPoints[PositionIndex.lForearmBend.Int()].Parent = jointPoints[PositionIndex.lShldrBend.Int()];
-
-        // Fase
-
-        // Right Leg
+        // 顔
+        // 右脚
         jointPoints[PositionIndex.rThighBend.Int()].Child = jointPoints[PositionIndex.rShin.Int()];
         jointPoints[PositionIndex.rShin.Int()].Child = jointPoints[PositionIndex.rFoot.Int()];
         jointPoints[PositionIndex.rFoot.Int()].Child = jointPoints[PositionIndex.rToe.Int()];
         jointPoints[PositionIndex.rFoot.Int()].Parent = jointPoints[PositionIndex.rShin.Int()];
-
-        // Left Leg
+        // 左脚
         jointPoints[PositionIndex.lThighBend.Int()].Child = jointPoints[PositionIndex.lShin.Int()];
         jointPoints[PositionIndex.lShin.Int()].Child = jointPoints[PositionIndex.lFoot.Int()];
         jointPoints[PositionIndex.lFoot.Int()].Child = jointPoints[PositionIndex.lToe.Int()];
         jointPoints[PositionIndex.lFoot.Int()].Parent = jointPoints[PositionIndex.lShin.Int()];
-
-        // etc
+        // 他
         jointPoints[PositionIndex.spine.Int()].Child = jointPoints[PositionIndex.neck.Int()];
         jointPoints[PositionIndex.neck.Int()].Child = jointPoints[PositionIndex.head.Int()];
         //jointPoints[PositionIndex.head.Int()].Child = jointPoints[PositionIndex.Nose.Int()];
@@ -215,33 +197,31 @@ public class VNectModel : MonoBehaviour
         if (useSkeleton)
         {
             // Line Child Settings
-            // Right Arm
+            // 右腕
             AddSkeleton(PositionIndex.rShldrBend, PositionIndex.rForearmBend);
             AddSkeleton(PositionIndex.rForearmBend, PositionIndex.rHand);
             AddSkeleton(PositionIndex.rHand, PositionIndex.rThumb2);
             AddSkeleton(PositionIndex.rHand, PositionIndex.rMid1);
-
-            // Left Arm
+            // 左腕
             AddSkeleton(PositionIndex.lShldrBend, PositionIndex.lForearmBend);
             AddSkeleton(PositionIndex.lForearmBend, PositionIndex.lHand);
             AddSkeleton(PositionIndex.lHand, PositionIndex.lThumb2);
             AddSkeleton(PositionIndex.lHand, PositionIndex.lMid1);
 
-            // Fase
+            // 顔
             AddSkeleton(PositionIndex.lEar, PositionIndex.Nose);
             AddSkeleton(PositionIndex.rEar, PositionIndex.Nose);
 
-            // Right Leg
+            // 右脚
             AddSkeleton(PositionIndex.rThighBend, PositionIndex.rShin);
             AddSkeleton(PositionIndex.rShin, PositionIndex.rFoot);
             AddSkeleton(PositionIndex.rFoot, PositionIndex.rToe);
-
-            // Left Leg
+            // 左脚
             AddSkeleton(PositionIndex.lThighBend, PositionIndex.lShin);
             AddSkeleton(PositionIndex.lShin, PositionIndex.lFoot);
             AddSkeleton(PositionIndex.lFoot, PositionIndex.lToe);
 
-            // etc
+            // 他
             AddSkeleton(PositionIndex.spine, PositionIndex.neck);
             AddSkeleton(PositionIndex.neck, PositionIndex.head);
             AddSkeleton(PositionIndex.head, PositionIndex.Nose);
@@ -257,14 +237,25 @@ public class VNectModel : MonoBehaviour
         }
 
         // Set Inverse
-        var forward = TriangleNormal(jointPoints[PositionIndex.hip.Int()].Transform.position, jointPoints[PositionIndex.lThighBend.Int()].Transform.position, jointPoints[PositionIndex.rThighBend.Int()].Transform.position);
-        foreach (var jointPoint in jointPoints)
+        var forward = TriangleNormal(
+            jointPoints[PositionIndex.hip.Int()].Transform.position, 
+            jointPoints[PositionIndex.lThighBend.Int()].Transform.position, 
+            jointPoints[PositionIndex.rThighBend.Int()].Transform.position);
+        
+        //foreach (var jointPoint in jointPoints)
+        for (var i = 0; i < jointPoints.Length; i++)
         {
+            // はじく実験
+            if (3 <= i && i <= 4) continue;
+            if (8 <= i && i <= 9) continue;
+            if (16 <= i && i <= 18) continue;
+            if (20 <= i && i <= 22) continue;
+
+            var jointPoint = jointPoints[i];
             if (jointPoint.Transform != null)
             {
                 jointPoint.InitRotation = jointPoint.Transform.rotation;
             }
-
             if (jointPoint.Child != null)
             {
                 jointPoint.Inverse = GetInverse(jointPoint, jointPoint.Child, forward);
@@ -325,10 +316,8 @@ public class VNectModel : MonoBehaviour
         tall = t * 0.7f + prevTall * 0.3f;
         prevTall = tall;
 
-        if (tall == 0)
-        {
-            tall = centerTall;
-        }
+        if (tall == 0) tall = centerTall;
+
         var dz = (centerTall - tall) / centerTall * ZScale;
 
         // movement and rotatation of center
@@ -336,15 +325,25 @@ public class VNectModel : MonoBehaviour
         jointPoints[PositionIndex.hip.Int()].Transform.position = jointPoints[PositionIndex.hip.Int()].Pos3D * 0.005f + new Vector3(initPosition.x, initPosition.y, initPosition.z + dz);
         jointPoints[PositionIndex.hip.Int()].Transform.rotation = Quaternion.LookRotation(forward) * jointPoints[PositionIndex.hip.Int()].InverseRotation;
 
+
         // rotate each of bones
-        foreach (var jointPoint in jointPoints)
+        //foreach (var jointPoint in jointPoints)
+        for (var i = 0; i < jointPoints.Length; i++)
         {
+            // はじく実験
+            if (3 <= i && i <= 4) continue;
+            if (8 <= i && i <= 9) continue;
+            if (16 <= i && i <= 18) continue;
+            if (20 <= i && i <= 22) continue;
+
+            var jointPoint = jointPoints[i];
             if (jointPoint.Parent != null)
             {
                 var fv = jointPoint.Parent.Pos3D - jointPoint.Pos3D;
                 jointPoint.Transform.rotation = Quaternion.LookRotation(jointPoint.Pos3D - jointPoint.Child.Pos3D, fv) * jointPoint.InverseRotation;
             }
-            else if (jointPoint.Child != null)
+            else 
+            if (jointPoint.Child != null)
             {
                 jointPoint.Transform.rotation = Quaternion.LookRotation(jointPoint.Pos3D - jointPoint.Child.Pos3D, forward) * jointPoint.InverseRotation;
             }

@@ -25,15 +25,17 @@ public class VNectBarracudaRunner : MonoBehaviour
     // キャリブレーション用画像
     public Texture2D InitImg;
     // キャリブレーション用の入力画像テンソル
-    Tensor InitialInput => new Tensor(InitImg);
-
+    //Tensor InitialInput => new Tensor(InitImg);
+    Tensor InitialInput;
     // 動画から取った入力画像テンソル
-    Tensor VideoInput => new Tensor(videoCapture.MainTexture);
+    Tensor VideoInput => new Tensor(videoCapture.InputTexture);
+
+
     // テキスト
     public TextMeshProUGUI Msg => GameObject.Find("Msg").GetComponent<TextMeshProUGUI>();
 
     // キャリブレーション完了フラグ
-    private bool Calibrated = false;
+    private bool Initialized = false;
 
     // 食わせる入力画像テンソルの3フレーム分。名前はこうじゃないといけないっぽい。モデルの都合？
     const string inputName_1 = "input.1";
@@ -49,17 +51,17 @@ public class VNectBarracudaRunner : MonoBehaviour
     private VNectModel.JointPoint[] jointPoints;
     // 関節数
     private const int JointNum = 24;
+    //private const int JointNum = 14;
     private int JointNum_Squared = JointNum * 2;
     private int JointNum_Cube = JointNum * 3;
 
     // 動画テクスチャを切り抜いてモーキャプに使うサイズ
-    // 大きすぎても小さすぎても制度が悪く、
-    // 多分動画内の人間と同じくらいにするといい感じっぽい VideoCapture 内で初期化するらしい。
-    public int InputImageSize;
-    private float InputImageSizeHalf => InputImageSize / 2f;
+    // ネットワークが受け取るザイズが448*448で作られてるので448
+    public int InputImgSize = 448;
+    private float InputImgSizeHalf => InputImgSize / 2f;
     // ヒートマップカラム数に対するインプットイメージサイズの割合
     // 1カラム辺りなんピクセルを担うかとかなのか？
-    private float ImageScale => InputImageSize / (float)HeatMapCol;// 224f / (float)InputImageSize;
+    private float ImgScale => InputImgSize / (float)HeatMapCol;// 224f / (float)InputImageSize;
 
     // ヒートマップカラム
     public int HeatMapCol;     //　数値変えたらアバターの挙動がやばくなった
@@ -113,28 +115,37 @@ public class VNectBarracudaRunner : MonoBehaviour
 
         // UIの文字をクリア
         Msg.text = "";
-
-
     }
 
 
     void Update()
     {
         // 更新
-        if (Calibrated) StartCoroutine(UpdateVNectModel());
+        if (Initialized) StartCoroutine(UpdateVNectModel());
     }
 
 
     IEnumerator Calibrate()
     {
+        if (InitImg == null)
+        {
+            Initialized = true;
+            yield return null;
+        }
+
+        // VideoCapture 初期化
+        videoCapture.Init(InputImgSize, InputImgSize);
+        
+        if (InitImg == null)
+            InitialInput = new Tensor(videoCapture.InputTexture);
+        else
+            InitialInput = new Tensor(InitImg);
+
         // 更新
         yield return StartCoroutine(UpdateVNectModel());
 
-        // VideoCapture 初期化
-        videoCapture.Init(InputImageSize, InputImageSize);
-
         // キャリブレーション完了フラグ
-        Calibrated = true;
+        Initialized = true;
     }
 
 
@@ -161,7 +172,7 @@ public class VNectBarracudaRunner : MonoBehaviour
     IEnumerator UpdateVNectModel()
     {
         // インプットデータを更新
-        if (!Calibrated)
+        if (!Initialized)
         {
             inputs[inputName_1] = InitialInput;
             inputs[inputName_2] = InitialInput;
@@ -182,27 +193,48 @@ public class VNectBarracudaRunner : MonoBehaviour
         yield return StartCoroutine(ExecuteModelAsync(inputs));
 
         // VNectModel 初期化
-        if (!Calibrated) jointPoints = VNectModel.Init();
+        if (!Initialized) jointPoints = VNectModel.Init();
 
         // 姿勢推定
         PredictPose();
     }
 
+    Vector3 rShin;
+    Vector3 rFoot;
+    Vector3 rToe;
+    Vector3 lShin;
+    Vector3 lFoot;
+    Vector3 lToe;
 
+    Vector3 rHand;
+    Vector3 rThumb;
+    Vector3 rMid;
+    Vector3 lHand;
+    Vector3 lThumb;
+    Vector3 lMid;
 
     //姿勢推定
     void PredictPose()
     {
         // ======== 各間接に対して何かしてる ========
-        for (var j = 0; j < JointNum; j++)
+        for (var i = 0; i < JointNum; i++)
         {
+            // はじく実験
+            if(Initialized)
+            {
+                if (3 <= i && i <= 4) continue;   // 右手
+                if (8 <= i && i <= 9) continue;   // 左手
+                if (16 <= i && i <= 18) continue; // 右脚
+                if (20 <= i && i <= 22) continue; // 左脚
+            }
+
             // この4パラメータを決めるためのループっぽい
-            jointPoints[j].score3D = 0.0f;
+            jointPoints[i].score3D = 0.0f;
             var maxXIndex = 0;
             var maxYIndex = 0;
             var maxZIndex = 0;
 
-            var jj = j * HeatMapCol; // 謎
+            var jj = i * HeatMapCol; // 謎
             for (var z = 0; z < HeatMapCol; z++)
             {
                 var zz = jj + z;　// 謎
@@ -212,9 +244,9 @@ public class VNectBarracudaRunner : MonoBehaviour
                     for (var x = 0; x < HeatMapCol; x++)
                     {
                         float v = heatMap3D[yy + x * HeatMapCol_JointNum]; // 謎
-                        if (v > jointPoints[j].score3D)
+                        if (v > jointPoints[i].score3D)
                         {
-                            jointPoints[j].score3D = v;
+                            jointPoints[i].score3D = v;
                             maxXIndex = x;
                             maxYIndex = y;
                             maxZIndex = z;
@@ -223,47 +255,122 @@ public class VNectBarracudaRunner : MonoBehaviour
                 }
             }
 
-            jointPoints[j].Now3D.x = // =======
+            // ========= 各関節の位置を計算 =========
+            jointPoints[i].Now3D.x = // ===
             (
                 offset3D
                 [
                     maxXIndex * CubeOffsetLinear +
                     maxYIndex * CubeOffsetSquared +
                     maxZIndex +
-                    HeatMapCol * j
+                    HeatMapCol * i
                 ]
                 + 0.5f
                 + (float)maxXIndex
-            ) * ImageScale -
-            InputImageSizeHalf;
+            ) * ImgScale -
+            InputImgSizeHalf;
 
-            jointPoints[j].Now3D.y = // =======
-            InputImageSizeHalf -
+            jointPoints[i].Now3D.y = // ===
+            InputImgSizeHalf -
             (
                 offset3D
                 [
                     maxXIndex * CubeOffsetLinear +
                     maxYIndex * CubeOffsetSquared +
                     maxZIndex +
-                    HeatMapCol * (j + JointNum)
+                    HeatMapCol * (i + JointNum)
                 ]
                 + 0.5f
                 + (float)maxYIndex
-            ) * ImageScale;
+            ) * ImgScale;
 
-            jointPoints[j].Now3D.z = // =======
+            jointPoints[i].Now3D.z = // ===
             (
                 offset3D
                 [
                     maxXIndex * CubeOffsetLinear +
                     maxYIndex * CubeOffsetSquared +
                     maxZIndex +
-                    HeatMapCol * (j + JointNum_Squared)
+                    HeatMapCol * (i + JointNum_Squared)
                 ]
                 + 0.5f
                 + (float)(maxZIndex - 14)
-            ) * ImageScale;
+            ) * ImgScale;
         }
+
+
+
+
+        // 脚の腹からの相対位置固定
+        if (!Initialized) {
+            rThumb =
+                jointPoints[PositionIndex.rThumb2.Int()].Now3D -
+                jointPoints[PositionIndex.rHand.Int()].Now3D;
+            rMid =
+                jointPoints[PositionIndex.rMid1.Int()].Now3D -
+                jointPoints[PositionIndex.rHand.Int()].Now3D;
+            lThumb =
+                jointPoints[PositionIndex.lThumb2.Int()].Now3D -
+                jointPoints[PositionIndex.lHand.Int()].Now3D;
+            lMid =
+                jointPoints[PositionIndex.lMid1.Int()].Now3D -
+                jointPoints[PositionIndex.lHand.Int()].Now3D;
+
+
+            rShin =
+                jointPoints[PositionIndex.rShin.Int()].Now3D -
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D;
+            rFoot =
+                jointPoints[PositionIndex.rFoot.Int()].Now3D -
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D;
+            rToe =
+                jointPoints[PositionIndex.rToe.Int()].Now3D -
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D;
+            lShin =
+                jointPoints[PositionIndex.lShin.Int()].Now3D -
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D;
+            lFoot =
+                jointPoints[PositionIndex.lFoot.Int()].Now3D -
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D;
+            lToe =
+                jointPoints[PositionIndex.lToe.Int()].Now3D -
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D;
+        }
+        else {
+            jointPoints[PositionIndex.rThumb2.Int()].Now3D =
+                jointPoints[PositionIndex.rHand.Int()].Now3D +
+                rThumb;
+            jointPoints[PositionIndex.rMid1.Int()].Now3D =
+                jointPoints[PositionIndex.rHand.Int()].Now3D +
+                rMid;
+            jointPoints[PositionIndex.lThumb2.Int()].Now3D =
+                jointPoints[PositionIndex.lHand.Int()].Now3D +
+                lThumb;
+            jointPoints[PositionIndex.lMid1.Int()].Now3D =
+                jointPoints[PositionIndex.lHand.Int()].Now3D +
+                lMid;
+
+
+            jointPoints[PositionIndex.rShin.Int()].Now3D =
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D +
+                rShin;
+            jointPoints[PositionIndex.rFoot.Int()].Now3D =
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D +
+                rFoot;
+            jointPoints[PositionIndex.rToe.Int()].Now3D =
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D +
+                rToe;
+            jointPoints[PositionIndex.lShin.Int()].Now3D =
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D +
+                lShin;
+            jointPoints[PositionIndex.lFoot.Int()].Now3D =
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D +
+                lFoot;
+            jointPoints[PositionIndex.lToe.Int()].Now3D =
+                jointPoints[PositionIndex.abdomenUpper.Int()].Now3D +
+                lToe;
+        }
+
 
         // ========== 追加の関節位置を計算 ==========
         // 尻位置 = 中間 [ 左右もも中間 , 腹上部 ]
@@ -302,18 +409,10 @@ public class VNectBarracudaRunner : MonoBehaviour
 
         // ================ フィルタ ================
         // カルマンフィルタ
-        foreach (var jp in jointPoints)
-        {
-            KalmanUpdate(jp);
-        }
+        foreach (var jp in jointPoints) KalmanUpdate(jp);
         // ローパスフィルタ
         if (UseLowPassFilter)
-        {
-            foreach (var jp in jointPoints)
-            {
-                LowPassFilter(jp);
-            }
-        }
+        foreach (var jp in jointPoints) LowPassFilter(jp);
     }
 
 

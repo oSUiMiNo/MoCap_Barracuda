@@ -385,7 +385,7 @@ Transform:
   m_GameObject: {fileID: 366802187}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.014577293, y: 0.0209, z: 0.1015}
+  m_LocalPosition: {x: 0, y: 0.0209, z: 0.1015}
   m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -765,7 +765,7 @@ MonoBehaviour:
   VNectModel: {fileID: 1237947619}
   videoCapture: {fileID: 1596529344}
   InitImg: {fileID: 2800000, guid: 70b274afd8d8e614c9ba7c8537116c41, type: 3}
-  InputImageSize: 448
+  InputImgSize: 448
   HeatMapCol: 28
   KalmanParamQ: 0.001
   KalmanParamR: 0.0015
@@ -840,7 +840,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3017483618357793798, guid: ce2b7dab7f932b64a8789816016e01f0, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3017483618357793798, guid: ce2b7dab7f932b64a8789816016e01f0, type: 3}
       propertyPath: m_LocalRotation.x
@@ -848,7 +848,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3017483618357793798, guid: ce2b7dab7f932b64a8789816016e01f0, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3017483618357793798, guid: ce2b7dab7f932b64a8789816016e01f0, type: 3}
       propertyPath: m_LocalRotation.z
@@ -860,7 +860,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3017483618357793798, guid: ce2b7dab7f932b64a8789816016e01f0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 180
       objectReference: {fileID: 0}
     - target: {fileID: 3017483618357793798, guid: ce2b7dab7f932b64a8789816016e01f0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -1007,7 +1007,7 @@ MonoBehaviour:
   SkeletonX: -1
   SkeletonY: 0.7
   SkeletonZ: 0
-  SkeletonScale: 0.0045
+  SkeletonScale: 0.0043
   ModelObject: {fileID: 1237947618}
   Nose: {fileID: 366802187}
   ZScale: 0.1
@@ -1024,7 +1024,7 @@ GameObject:
   - component: {fileID: 1413751776}
   - component: {fileID: 1413751775}
   m_Layer: 0
-  m_Name: InputTexture
+  m_Name: TextureDisp_Input
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1448,7 +1448,7 @@ GameObject:
   - component: {fileID: 1596529341}
   - component: {fileID: 1596529344}
   m_Layer: 0
-  m_Name: MainTexrure
+  m_Name: TexrureDisp_Source
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1534,10 +1534,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b43ee08626b2d064393cd9e8ad3d690e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InputTexture: {fileID: 1413751774}
+  TextureDisp_Input: {fileID: 1413751774}
+  TextureDisp_Soutce: {fileID: 1596529340}
   VideoScreen: {fileID: 1512834103}
-  VideoBackground: {fileID: 1596529340}
-  VideoBackgroundScale: 1
+  SoutceTextureScale: 1
   _layer:
     serializedVersion: 2
     m_Bits: 1
