@@ -10,7 +10,7 @@ public class TestVideo : MonoBehaviour
     void Start()
     {
         // VideoCapture ‰Šú‰»
-        videoCapture.Init(InputImageSize, InputImageSize);
+        //videoCapture.Init(InputImageSize, InputImageSize);
     }
 
     // Update is called once per frame

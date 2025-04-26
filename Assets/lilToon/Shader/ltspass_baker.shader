@@ -138,7 +138,6 @@ Shader "Hidden/ltsother_baker"
             #define LIL_FEATURE_ShadowColorTex
             #define LIL_FEATURE_Shadow2ndColorTex
             #define LIL_FEATURE_Shadow3rdColorTex
-            #define LIL_FEATURE_RimShadeMask
             #define LIL_FEATURE_BacklightColorTex
             #define LIL_FEATURE_SmoothnessTex
             #define LIL_FEATURE_MetallicGlossMap

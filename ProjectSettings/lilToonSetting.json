@@ -67,7 +67,6 @@
     "LIL_FEATURE_ShadowColorTex": true,
     "LIL_FEATURE_Shadow2ndColorTex": true,
     "LIL_FEATURE_Shadow3rdColorTex": true,
-    "LIL_FEATURE_RimShadeMask": true,
     "LIL_FEATURE_BacklightColorTex": true,
     "LIL_FEATURE_SmoothnessTex": true,
     "LIL_FEATURE_MetallicGlossMap": true,
@@ -135,5 +134,5 @@
     "presetCloth": {
         "instanceID": 0
     },
-    "previousVersion": 43
+    "previousVersion": 42
 }

@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: fc6d33f290f661547981f67ae540d7cc
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 194959
+  packageName: Emergency Exit
+  packageVersion: 1.1.0
+  assetPath: Assets/Aevus/EmergencyExit/EmergencyExit.cs
+  uploadId: 434513

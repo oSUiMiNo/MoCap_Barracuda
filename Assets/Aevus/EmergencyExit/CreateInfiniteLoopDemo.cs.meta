@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: fb5c2e69bd0e2c04cbd88a65f8eaab71
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 194959
+  packageName: Emergency Exit
+  packageVersion: 1.1.0
+  assetPath: Assets/Aevus/EmergencyExit/CreateInfiniteLoopDemo.cs
+  uploadId: 434513

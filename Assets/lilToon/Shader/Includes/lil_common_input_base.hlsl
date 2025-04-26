@@ -684,7 +684,7 @@ lilBool _Invisible;
     lilBool _UseShadow;
     lilBool _ShadowPostAO;
 #endif
-#if defined(LIL_FEATURE_RIMSHADE)
+#if defined(LIL_FEATURE_SHADOW)
     lilBool _UseRimShade;
 #endif
 #if defined(LIL_FEATURE_BACKLIGHT)

@@ -39,7 +39,6 @@ namespace lilToon.External
                 var materials = GetMaterialsFromGameObject(avatarGameObject);
                 var clips = GetAnimationClipsFromGameObject(avatarGameObject);
                 SetShaderSettingBeforeBuild(materials, clips);
-                lilMaterialUtils.SetupMultiMaterial(materials, clips);
             }
             catch(Exception e)
             {
